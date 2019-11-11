@@ -1,0 +1,64 @@
+<!doctype html>
+<html class="no-js">
+<head>
+	<meta charset="utf-8">
+	<title>Prebid Test Page : JWPlayer</title>
+
+	<script>
+		var messages = [];
+		function saveOptions() {
+			localStorage.setItem('prebidOptionsUrl', document.getElementById('txtOptionsUrl').value);
+		}
+
+		function appendStatistics(text) {
+			var el = document.getElementById('statistics');
+			if (el) {
+				if (messages.length > 0) {
+					for (var i = 0; i < messages.length; i++) {
+						el.value = el.value + '\r\n' + messages[i];
+					}
+					messages = [];
+				}
+				el.value = el.value + '\r\n' + text;
+				el.scrollTop = el.scrollHeight;
+			}
+			else {
+				messages.push(text);
+			}
+		}
+
+		function getOptions() {
+        	var savedUrl = localStorage.getItem('prebidOptionsUrl');
+			var optionsUrl = !!savedUrl ? savedUrl : '//video-demo.adnxs.net/encino/prebidPrototype/default-options.json';
+			window.prebidPluginCP.doPrebid(optionsUrl);
+		}
+
+		document.addEventListener('prebidMessage', function(event) {
+			// console.log('prebidMessage event:', event);
+			appendStatistics(event.detail);
+		});
+	</script>
+	<script src="../../../dist/PrebidPluginCP.js" onload="getOptions()"></script>
+</head>
+<body >
+<div style="background: #FC9D90; color: #ffffff; width:800px; height:880px;">
+	<div style="position:absolute; top:10px; left:70px;">
+		<p style="color: black">
+			Prebid Settings URL:&nbsp;&nbsp;
+			<input id="txtOptionsUrl" type="text" size="85" value="//video-demo.adnxs.net/encino/prebidPrototype/default-options.json"></input>
+			<button onclick="saveOptions()">Save</button>
+		</p>
+	</div>
+	<iframe src='./jwplayer-sync.html' style='position:absolute; top:60px; left:70px; width:660px; height:380px;'></iframe>
+	<div style="position:absolute; top:480px; left:70px; z-index:920; width:640px; height:400px;">
+		<textarea id="statistics" wrap="off" cols="88" rows="20" style="color:black; background-color:transparent; border:solid 1px black; font-size:10pt; resize:none;">Ad Statistics:</textarea>
+	</div>
+</div>
+<script>
+	var value = localStorage.getItem('prebidOptionsUrl');
+	if (value) {
+		document.getElementById('txtOptionsUrl').value = value;
+	}
+</script>
+</body>
+</html>
