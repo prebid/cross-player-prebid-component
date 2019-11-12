@@ -4,8 +4,8 @@
  */
 
 import Logger from './Logging';
-import Loader from './UrlLoader';
-import PrebidCommunicator from './PrebidCommunicator';
+import { Loader } from './UrlLoader';
+import { PrebidCommunicator } from './PrebidCommunicator';
 
 const DEFAULT_PREBID_JS_PATH = '//acdn.adnxs.com/prebid/not-for-prod/1/prebid.js';
 
@@ -21,7 +21,7 @@ const RESPONSE_STATUS = {
     FAILED: 'failed'
 };
 
-class PrebidPluginCP {
+export class PrebidPluginCP {
     constructor() {
         this._prefix = 'PrebidPlugin->';
         Logger.always(this._prefix, 'Version 0.1.6');
@@ -202,7 +202,7 @@ class PrebidPluginCP {
 	// @endexclude
 }
 
-module.exports = PrebidPluginCP;
+// module.exports = PrebidPluginCP;
 
 // pollyfill for IE 11 support
 if (navigator.userAgent.indexOf('Trident/7.0') > -1) {

@@ -9,7 +9,7 @@ const _prefix = 'PrebidPlugin->PrebidCommunicator->';
 let _lpbjsIsBusy = false;
 const DEFAULT_PREBID_CACHE_URL = '//prebid.adnxs.com/pbc/v1/cache';
 
-class PrebidCommunicator {
+export class PrebidCommunicator {
 	constructor (options) {
 		this.options = options;
 
@@ -227,5 +227,3 @@ class PrebidCommunicator {
 	};
 	// @endexclude
 }
-
-module.exports = PrebidCommunicator;

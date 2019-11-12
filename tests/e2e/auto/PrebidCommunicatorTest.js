@@ -1,4 +1,4 @@
-import PrebidCommunicator from '../../../src/PrebidCommunicator';
+import { PrebidCommunicator } from '../../../src/PrebidCommunicator';
 
 describe('PrebidCommunicator unit test', () => {
     let communicatorObj;

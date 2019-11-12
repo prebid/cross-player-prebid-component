@@ -76,8 +76,9 @@ function ajaxLoad(url, callback, timeout, options) {
     httpRequest.send();
 }
 
-module.exports = {
-    /** Load a URL.
+// module.exports = {
+export const Loader = {
+        /** Load a URL.
      * @param {string} url - Target URL to load.
      * @param {Function} callback - Function to call back once loading has either completed or encountered an error.
      * @param {number} timeout - Timeout (in ms) to use for this URL Load.
