@@ -1,87 +1,79 @@
+var path = require('path');
 var gulp = require('gulp');
 var gutil = require('gulp-util');
+var Server = require('karma').Server;
 var webpack = require('webpack');
 var WebpackDevServer = require('webpack-dev-server');
-var rename = require('gulp-rename');
-var header = require('gulp-header');
 
-var gulpWebpack = require('gulp-webpack');
-var webpackConfig = require('./webpack.conf.js');
+var webpack_config_dev = require('./webpack.dev.js')(null, null);
+var webpack_config_prod = require('./webpack.prod.js')(null, null);
 
-var path = require('path');
-var Server = require('karma').Server;
+var getWebpackCallback = function getWebpackCallback (done) {
+    return function (err, stats) {
+        if (err) {
+            throw new gutil.PluginError('webpack', err);
+        }
+        else {
+            gutil.log('=================== Webpack Build Report ===================\n', stats.toString());
+        }
+        done();
+    }
+};
 
-var cp = require('child_process');
-
-var eslint = require('gulp-eslint');
-
-var pkg = require('./package.json');
-
-var curVersion = pkg.version;
-
-var versionText = 'v' + curVersion;
-
-var curDateObj = new Date();
-
-var copyrightText = '(c)' + curDateObj.getUTCFullYear() + ' Xandr';
-
-var bannerText = '/*! ' + copyrightText + ' ' + versionText + '*/\n';
-
-gulp.task('webpack:build', function(_callback) {
-    return gulpWebpack(require('./webpack.conf.js'))
-        .pipe(gulp.dest('dist/'));
+gulp.task('build-dev', function (done) {
+    webpack(webpack_config_dev, getWebpackCallback(done));
 });
 
-gulp.task('webpack:build-min', function(_callback) {
-    webpackConfig.plugins.push(new webpack.optimize.UglifyJsPlugin({
-       minimize: false,
-      sourceMap: false
-    }));
-    return gulpWebpack(webpackConfig)
-       .pipe(header(bannerText))
-       .pipe(rename({suffix: '.min'}))
-       .pipe(gulp.dest('dist/'));
+gulp.task('build-prod', function (done) {
+    webpack(webpack_config_prod, getWebpackCallback(done));
 });
 
-gulp.task('lint', () => {
-    return gulp.src(['src/**/*.js', 'tests/e2e/auto/**/*.js'])
-      .pipe(eslint())
-      .pipe(eslint.format('stylish'))
-      .pipe(eslint.failAfterError());
-});
-
-gulp.task('test', function () {
+/* gulp.task('test', function () {
     // eslint-disable-next-line handle-callback-err
     return cp.execFile('./test.sh', function(error, stdout, stderr) {
         console.log(stdout);
     });
+}); */
+
+gulp.task('test', function (done) {
+    new Server({
+        configFile: path.join(__dirname, 'karma.conf.js')
+    }, function (err) {
+        console.log('===================== Karma: Unit tests ' + (err > 0 ? 'FAILED' : 'PASSED') + '! ===================== ');
+        done();
+    }).start();
 });
 
-gulp.task('dev-server', function(_callback) {
-    // modify some webpack config options
-    var myConfig = Object.create(webpackConfig);
-    myConfig.devtool = 'eval';
-    myConfig.debug = true;
+// NOTE: This task must be defined after the tasks it depends on
+gulp.task('default', gulp.series('build-prod', 'test'));
+
+// NOTE: This task must be defined after the tasks it depends on
+gulp.task('build', gulp.series('build-prod', 'test'));
+
+gulp.task('dev-server', function (callback) {
+    var debugPort = 8082;
+    var target_entry = 'http://local.prebid:' + debugPort + '/webpack-dev-server/';
 
     // Start a webpack-dev-server
     // note- setting "publicPath" to /dist/ hides the actual
     // dist folder.  When webpack-dev-server runs, it does a webpack build
-    // of the module in memory, not on disk into /dist/  This allows us to do live-rebuilds duing development time
+    // of the module in memory, not on disk into /dist/  This allows us to do live-rebuilds during development time
     // to build to the actual dist folder, you need to run the webpack gulp task
     // note that the pages in the testPages folder point to ../../../dist/ModuleName.js
     // this is so they can run standalone outside of the webpack dev server, and when webpack-dev-server server the file
     // moving up levels doesn't matter because we are already at the webserver root
-    new WebpackDevServer(webpack(myConfig), {
+
+    var wp = webpack(webpack_config_dev);
+    new WebpackDevServer(wp, {
         publicPath: '/dist/',
         contentBase: './tests/e2e/testPages/',
-        hot: true,
-        devtool: 'source-map',
+        hot: false,
         stats: {
             colors: true
         }
-    }).listen(8082, 'local.prebid', function(err) {
+    }).listen(debugPort, 'local.prebid', function (err) {
         if (err) throw new gutil.PluginError('webpack-dev-server', err);
-        gutil.log('[webpack-dev-server]', 'Webpack Dev Server Started at: http://local.prebid:8082/webpack-dev-server/');
+        gutil.log('[webpack-dev-server]', 'Webpack Dev Server Started at: ' + target_entry);
     });
 });
 
@@ -121,12 +113,4 @@ gulp.task('ci-test', function (done) {
         }, function (error) {
         done(error);
       }).start();
-});
-
-gulp.task('default', ['lint', 'webpack:build', 'webpack:build-min', 'test']);
-
-gulp.task('test', function () {
-    return cp.execFile('./test.sh', function(_error, stdout, _stderr) {
-        console.log(stdout);
-    });
 });
