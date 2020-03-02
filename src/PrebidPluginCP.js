@@ -24,7 +24,7 @@ const RESPONSE_STATUS = {
 export class PrebidPluginCP {
     constructor() {
         this._prefix = 'PrebidPlugin->';
-        Logger.always(this._prefix, 'Version 0.1.6');
+        Logger.always(this._prefix, 'Version 0.2.1');
         this.Communicator = PrebidCommunicator;
         // this.defaultUrl = 'http://video.devnxs.net/raj/outstream/video_AutoPlaySoundOn.xml';
         this.defaultUrl = undefined;
@@ -36,7 +36,7 @@ export class PrebidPluginCP {
         };
 
         this.loadPrebidJS = (options, callback) => {
-            if (document.getElementById('prebidJsScript')) {
+            if (document.getElementById('prebidJsScript') || window.pbjs) {
                 callback(true);
                 return;
             }
@@ -54,14 +54,15 @@ export class PrebidPluginCP {
         };
 
         this.messageHandler = (event) => {
-            Logger.log(this._prefix, 'Got message.', event);
+            // Logger.log(this._prefix, 'Got message.', event);
             if (event && event.data) {
                 let data;
                 try {
                     data = JSON.parse(event.data);
+                    Logger.log(this._prefix, 'Got message.', event);
                 }
                 catch (err) {
-                    Logger.log(this._prefix, 'Invalid message data');
+                    // Logger.log(this._prefix, 'Invalid message data');
                     return;
                 }
                 const frameWnd = event.source;
@@ -144,7 +145,7 @@ export class PrebidPluginCP {
                     // let communicator = new PrebidCommunicator(this.options);
                     let communicator = new this.Communicator(this.options);
                     this.dispatchMessageEvent('Request Prebid for VAST url');
-                    communicator.getVastUrl(2000, (url) => {
+                    communicator.getVastUrl(2000000, (url) => {
                         this.defaultUrl = !!url ? url : null;
                         communicator = null;
                         document.dispatchEvent(new Event('gotDefaultUrl'));
