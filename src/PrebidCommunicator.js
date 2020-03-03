@@ -88,13 +88,15 @@ export class PrebidCommunicator {
 					if (this.options.bidderSettings) {
 						loaclPBJS.bidderSettings = this.options.bidderSettings;
 					}
+					const code = `${this.options.biddersSpec.code}_${Date.now()}`;
 					if (this.options.hasOwnProperty('numberOfPods') && this.options.numberOfPods > 0) {
 						let adUnits = [];
-						for (let i = 0; i < this.options.numberOfPods; i++) {
+						// for (let i = 0; i < this.options.numberOfPods; i++) {
 							let spec = Object.assign({}, this.options.biddersSpec);
-							spec.code = `${this.options.biddersSpec.code}_${i + 1}`;
+							spec.code = code;	// `${this.options.biddersSpec.code}_1`;
 							adUnits.push(spec);
-						}
+						// }
+						loaclPBJS.removeAdUnit(spec.code);
 						loaclPBJS.addAdUnits(adUnits);
 					}
 					else {
@@ -125,6 +127,7 @@ export class PrebidCommunicator {
 
 					this.dispatchMessageEvent('Prebid.js requests bids');
 					loaclPBJS.requestBids({
+						adUnitCodes: [code],
 						timeout: (this.options.prebidTimeout && this.options.prebidTimeout > 0) ? this.options.prebidTimeout : 700,
 						bidsBackHandler: function (bids) { // this function will be called once bids are returned
 							logBids(bids);
@@ -245,6 +248,25 @@ export class PrebidCommunicator {
 				_lpbjsIsBusy = false;
 			}
 		};
+
+		this.doPodPrebid = (urls, callback) => {
+			this.doPrebid((creative) => {
+				urls.push(creative);
+				if (urls.length === this.options.numberOfPods) {
+					callback(urls);
+				}
+				else {
+					setTimeout(() => {
+						this.doPodPrebid(urls, callback);
+					}, 1000);
+				}
+			})
+		};
+
+		/* this.prepareDoPrebid = (callback) => {
+			let urls = [];
+			doPodPrebid(urls, callback);
+		}; */
 	}
 
 	getVastUrl (timeout, callback) {
@@ -257,7 +279,9 @@ export class PrebidCommunicator {
 			if (!_lpbjsIsBusy) {
 				clearInterval(waitPbjs);
 				this.dispatchMessageEvent('Prebid.js is ready for bidding');
-				this.doPrebid(callback);
+				// this.doPrebid(callback);
+				let urls = [];
+				this.doPodPrebid(urls, callback);
 			}
 		}, 50);
 	}
