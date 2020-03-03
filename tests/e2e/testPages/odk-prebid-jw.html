@@ -1,0 +1,152 @@
+<!doctype html>
+<html class="no-js">
+<head>
+	<meta charset="utf-8">
+	<title>JWPlayer</title>
+	<script type="text/javascript" src="https://content.jwplatform.com/libraries/72xIKEe6.js"></script>
+    <script src="./odk-options.js"></script>
+    <script>
+      function doHeaderBidding() {
+        window.prebidPluginCP.doPrebid(odkPrebidOptions);
+      }
+    </script>
+    <!-- <script src="http://video.devnxs.net/projects/git/PrebidPluginCP.js" onload="doHeaderBidding()"></script> -->
+    <script src="../../../dist/PrebidPluginCP.js" onload="doHeaderBidding()"></script>
+</head>
+<body >
+<div style="background: #FC9D90; color: #ffffff;">
+	<!-- PLAYER DIV - IMPLEMENTATION VARIES BY PLAYER -->
+	<div id="parentContainer1" style="width:640px;">
+		<div id="playerContainer1" style="width:640px;height:360px;"></div>
+	</div>
+	<!-- END PLAYER DIV -->
+</div>
+<script>
+	// request url for preroll
+	// to do
+	console.log('******', 'IFrame is loaded');
+
+	// ==================================== Configure JW Player ==================================== //
+
+	_playerInstance1 = jwplayer("playerContainer1");
+	var settings1 = {
+		file: 'https://hls.ondemandkorea.com/v1/202002/korean-news/jtbc-morning/jtbc-morning-e20200221/playlist_720.m3u8'
+	};
+	settings1.autostart = true;
+	settings1.mute = true;
+	var elem = document.getElementById("playerContainer1");
+	settings1.width = elem.offsetWidth;
+	settings1.height = elem.offsetHeight;
+	settings1.controlbar = 'over';
+	settings1.image = '//s-media-cache-ak0.pinimg.com/originals/02/cb/c9/02cbc9ae68575ec67cd6cbc4471ccf2f.jpg';
+	settings1.advertising = {
+					client: "googima",
+					adscheduleid: "Az12bY34",
+					schedule: [
+						{'offset': 'pre', 'tag': null}, 
+						{'offset': '00:12:00:000', 'tag': null}, 
+						{'offset': 1440, 'tag': null}, 
+						{'offset': 2160, 'tag': null}, 
+						{'offset': 2880, 'tag': null}, 
+						{'offset': 3600, 'tag': null}, 
+						{'offset': 4320, 'tag': null}, 
+						{'offset': 5040, 'tag': null}, 
+						{'offset': 'post', 'tag': null}
+					]
+                 };
+	// _playerInstance1.setup(settings1);
+
+	// ==================================== END Configure JW Player ==================================== //
+
+	var atemptCount = 20;
+	var messageId = 10000;
+
+	var timeout = null;
+	var timeoutHandler = function() {
+		console.log('******', 'request url timeout');
+		requestUrl();
+	};
+
+	var requestUrl = function() {
+		console.log('******', 'request url from player html');
+		if (--atemptCount < 0) {
+			console.log('******', 'Failed to get VAST url');
+			// failed to get vast url, clear timeout
+			if (timeout) {
+				clearTimeout(timeout);
+				timeout = null;
+			}
+			_playerInstance1.setup(settings1);
+		}
+		else {
+			var message = {
+				command: 'PPCP:prebidUrlRequest',
+				messageId: ++messageId
+			};
+			top.postMessage(JSON.stringify(message), '*');
+			timeout = setTimeout(timeoutHandler, 100);
+		}
+	};
+
+	var startMainContent = function() {
+		window.removeEventListener('message', postMsgListener);
+		_playerInstance1.setup(settings1);
+	};
+
+	var postMsgListener = function(event) {
+		console.log('******', 'Got message', event.data);
+		if (event && event.data) {
+			try {
+				var data = JSON.parse(event.data);
+				if (data.command === 'PPCP:prebidResponse' && data.messageId === messageId) {
+					// got response, clear timeout
+					if (timeout) {
+						clearTimeout(timeout);
+						timeout = null;
+					}
+					if (data.url === 'unknown') {
+						// the prebid process is still pending
+						setTimeout(function () {
+							requestUrl();
+						}, 100);
+					}
+					else if (data.url === 'failed') {
+						// the prebid process did not return an ad
+						startMainContent();
+					}
+					else if (Array.isArray(data.url) && data.url.length > 0) {
+						// prebid successfully selected an ad to play
+						for (var i = 0; i < settings1.advertising.schedule.length; i++) {
+							settings1.advertising.schedule[i].tag = data.url[i];
+							// settings1.advertising.schedule[i].tag = data.url[0];
+							settings1.advertising.schedule[i].tag += ('&pod=' + i);
+							/* if (settings1.advertising.schedule[i].offset === 'pre') {
+								settings1.advertising.schedule[i].tag += '&vpos=preroll';
+							}
+							else if (settings1.advertising.schedule[i].offset === 'post') {
+								settings1.advertising.schedule[i].tag += '&vpos=postroll';
+							}
+							else {
+								settings1.advertising.schedule[i].tag += '&vpos=midroll';
+							} */
+						}
+						console.log('****** SCHEDULE:', settings1.advertising.schedule);
+						startMainContent();
+					}
+					else {
+						// try request url just in case
+						setTimeout(function () {
+							requestUrl();
+						}, 100);
+					}
+				}
+			}
+			catch(e) {}
+		}
+	};
+	window.addEventListener('message', postMsgListener);
+
+	requestUrl();
+</script>
+</body>
+</html>

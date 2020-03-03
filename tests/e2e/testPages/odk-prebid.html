@@ -679,7 +679,7 @@
           if (breaks.hasOwnProperty(breakname)) {
             breaks[breakname].tag = urls[i];
             breaks[breakname].tag += ('&pod=' + i);
-            if (breaks[breakname].offset === 'pre') {
+            /* if (breaks[breakname].offset === 'pre') {
               breaks[breakname].tag += '&vpos=preroll';
             }
             else if (breaks[breakname].offset === 'post') {
@@ -687,7 +687,7 @@
             }
             else {
               breaks[breakname].tag += '&vpos=midroll';
-            }
+            } */
           }
         }
         console.log('****** breaks: ', breaks);
