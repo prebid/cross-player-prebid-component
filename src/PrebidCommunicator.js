@@ -92,16 +92,13 @@ export class PrebidCommunicator {
 						let adUnits = [];
 						for (let i = 0; i < this.options.numberOfPods; i++) {
 							let spec = Object.assign({}, this.options.biddersSpec);
-							spec.code = `${this.options.code}_${i + 1}`;
+							spec.code = `${this.options.biddersSpec.code}_${i + 1}`;
 							adUnits.push(spec);
 						}
 						loaclPBJS.addAdUnits(adUnits);
 					}
 					else {
-						// let spec = Object.assign({}, this.options.biddersSpec);
-						// spec.code += `${Date.now()}`;
 						loaclPBJS.addAdUnits(this.options.biddersSpec); // add your ad units to the bid request
-						// loaclPBJS.addAdUnits(spec); // add your ad units to the bid request
 					}
 
 					if (this.options.prebidConfigOptions) {
@@ -127,16 +124,13 @@ export class PrebidCommunicator {
 					}
 
 					this.dispatchMessageEvent('Prebid.js requests bids');
-					// for (let i = 0; i < this.options.numberOfPods; i++) {
-						loaclPBJS.requestBids({
-							// adUnitCodes: [`my-video-tag_${i + 1}`],
-							timeout: (this.options.prebidTimeout && this.options.prebidTimeout > 0) ? this.options.prebidTimeout : 700,
-							bidsBackHandler: function (bids) { // this function will be called once bids are returned
-								logBids(bids);
-								// callback(bids);
-							}
-						});
-					// }
+					loaclPBJS.requestBids({
+						timeout: (this.options.prebidTimeout && this.options.prebidTimeout > 0) ? this.options.prebidTimeout : 700,
+						bidsBackHandler: function (bids) { // this function will be called once bids are returned
+							logBids(bids);
+							callback(bids);
+						}
+					});
 				});
 			}
 			else {
@@ -170,7 +164,7 @@ export class PrebidCommunicator {
 						return creative;
 					}
 					const arrBids = (this.options.biddersSpec && bids && typeof bids !== 'string' && bids[this.options.biddersSpec.code]) ? bids[this.options.biddersSpec.code].bids : [];
-					Logger.log(_prefix, 'bids for bidding: ', arrBids);
+					Logger.log(_prefix, 'bids for bidding (not for pods): ', arrBids);
 					let loaclPBJS = pbjs;
 					if (arrBids && Array.isArray(arrBids)) {
 						let creative;
@@ -195,12 +189,11 @@ export class PrebidCommunicator {
 								this.dispatchMessageEvent(`Prebid.js makes request GAM for VAST url`);
 								if (this.options.hasOwnProperty('numberOfPods')) {
 									if (this.options.numberOfPods > 0) {
-										// let creatives = [];
+										let creatives = [];
 										dfpOpts.code = this.options.biddersSpec.code;
 										dfpOpts.callback = (err, tag) => {
 											if (err) {
-												callback(null);
-												// creatives.push(null);
+												creatives.push(null);
 											}
 											else {
 												// add custom parameters
@@ -211,17 +204,16 @@ export class PrebidCommunicator {
 														tag += encodeURIComponent(kvp);
 													});
 												}
-												callback(tag);
-												// creatives.push(null);
+												creatives.push(tag);
 											}
-											/* if (creatives.length === this.options.numberOfPods) {
+											if (creatives.length === this.options.numberOfPods) {
 												callback(creatives);
-											} */
+											}
 										};
-										// for (let i = 0; i < this.options.numberOfPods; i++) {
-										//	dfpOpts.code = `${this.options.code}_${i + 1}`;
+										for (let i = 0; i < this.options.numberOfPods; i++) {
+											dfpOpts.code = `${this.options.biddersSpec.code}_${i + 1}`;
 											loaclPBJS.adServers.dfp.buildAdpodVideoUrl(dfpOpts);
-										// }
+										}
 									}
 									else {
 										Logger.log(_prefix, 'Invalid numberOfPods setting');
@@ -253,27 +245,6 @@ export class PrebidCommunicator {
 				_lpbjsIsBusy = false;
 			}
 		};
-
-		this.doPrebidForPod = (creatives, podCount) => {
-			this.doPrebid((creative) => {
-				creatives.push(creative);
-				// if (creatives.length < podCount) {
-				// 	this.doPrebidForPod(creatives, podCount);
-				// }
-			});
-		}
-
-		this.prepareDoPrebid = (callback) => {
-			this.options.code = this.options.biddersSpec.code;
-			if (this.options.hasOwnProperty('numberOfPods') && this.options.numberOfPods > 0) {
-				let creatives = [];
-				this.doPrebidForPod(creatives, this.options.numberOfPods);
-				callback(creatives);
-			}
-			else {
-				this.doPrebid(callback);
-			}
-		}
 	}
 
 	getVastUrl (timeout, callback) {
@@ -286,7 +257,7 @@ export class PrebidCommunicator {
 			if (!_lpbjsIsBusy) {
 				clearInterval(waitPbjs);
 				this.dispatchMessageEvent('Prebid.js is ready for bidding');
-				this.prepareDoPrebid(callback);
+				this.doPrebid(callback);
 			}
 		}, 50);
 	}

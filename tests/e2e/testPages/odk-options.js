@@ -54,7 +54,7 @@ var odkPrebidOptions = {
             }
 		}
     },
-    numberOfPods: 3,
+    numberOfPods: 9,
 	prebidTimeout: 7000,
 	enablePrebidCache: true
 };

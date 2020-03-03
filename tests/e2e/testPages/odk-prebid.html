@@ -630,7 +630,7 @@
     */
     var breaks = {
     'adbreak1': {'offset': 'pre', 'tag': null}, 
-    'adbreak2': {'offset':  '720', 'tag': null}, 
+    'adbreak2': {'offset': '720', 'tag': null}, 
     'adbreak3': {'offset': '1440', 'tag': null}, 
     'adbreak4': {'offset': '2160', 'tag': null}, 
     'adbreak5': {'offset': '2880', 'tag': null}, 
@@ -638,22 +638,6 @@
     'adbreak7': {'offset': '4320', 'tag': null}, 
     'adbreak8': {'offset': '5040', 'tag': null}, 
     'adbreak9': {'offset': 'post', 'tag': null}};
-
-    odkPlayer.onAdRequest = function(e) {
-      // isValidRequest = true;
-      console.log('****** onAdRequest: ', e);
-    };
-    var oridOnTime = odkPlayer.onTime;
-    var played = false;
-    var ourPlayer;
-    /* odkPlayer.onTime = function(e) {
-      oridOnTime(e);
-      var curPos = parseInt(e.position, 10);
-      if (!played && curPos > 30) {
-        played = true;
-        ourPlayer.playAd('http://video.devnxs.net/raj/outstream/video_AutoPlaySoundOn.xml');
-      }
-    }; */
 
 		var messageId = 10000;
 		function getVastUrl() {
@@ -704,21 +688,13 @@
             else {
               breaks[breakname].tag += '&vpos=midroll';
             }
-            break;
           }
         }
         console.log('****** breaks: ', breaks);
         odkPlayer.init([{'tracks': [], 'sources': 
           [{'file': 'https://hls.ondemandkorea.com/v1/202002/korean-news/jtbc-morning/jtbc-morning-e20200221/playlist_720.m3u8'}]
         }], breaks);
-        /* ourPlayer = jwplayer('video_player');
-        ourPlayer.on('adSchedule', function(e){
-          console.log('adSchedule: ', e);
-        }); */
         odkSidebanner.init(0, 'en');
-        setTimeout(function() {
-          breaks.adbreak2.tag = breaks.adbreak1.tag;
-        }, 20000);
     })
     .catch(function() {
       odkPlayer.init([{'tracks': [], 'sources': 
