@@ -82,26 +82,14 @@ export class PrebidCommunicator {
 				};
 
 				loaclPBJS.que.push(() => {
-					// loaclPBJS.removeAdUnit(this.options.biddersSpec.code);
 					specifyBidderAliases(this.options.bidderAliases, loaclPBJS);
 					prepareBidderSettings(this.options);
 					if (this.options.bidderSettings) {
 						loaclPBJS.bidderSettings = this.options.bidderSettings;
 					}
-					const code = `${this.options.biddersSpec.code}_${Date.now()}`;
-					if (this.options.hasOwnProperty('numberOfPods') && this.options.numberOfPods > 0) {
-						let adUnits = [];
-						// for (let i = 0; i < this.options.numberOfPods; i++) {
-							let spec = Object.assign({}, this.options.biddersSpec);
-							spec.code = code;	// `${this.options.biddersSpec.code}_1`;
-							adUnits.push(spec);
-						// }
-						loaclPBJS.removeAdUnit(spec.code);
-						loaclPBJS.addAdUnits(adUnits);
-					}
-					else {
-						loaclPBJS.addAdUnits(this.options.biddersSpec); // add your ad units to the bid request
-					}
+					loaclPBJS.removeAdUnit(this.options.biddersSpec.code);
+					let adUnit = Object.assign({}, this.options.biddersSpec);
+					loaclPBJS.addAdUnits(adUnit);	// add your ad units to the bid request
 
 					if (this.options.prebidConfigOptions) {
 						// Enable Prebid Cache by default
@@ -127,7 +115,7 @@ export class PrebidCommunicator {
 
 					this.dispatchMessageEvent('Prebid.js requests bids');
 					loaclPBJS.requestBids({
-						adUnitCodes: [code],
+						adUnitCodes: [this.options.biddersSpec.code],
 						timeout: (this.options.prebidTimeout && this.options.prebidTimeout > 0) ? this.options.prebidTimeout : 700,
 						bidsBackHandler: function (bids) { // this function will be called once bids are returned
 							logBids(bids);
@@ -190,38 +178,27 @@ export class PrebidCommunicator {
 									dfpOpts.bid = this.options.dfpParameters.bid;
 								}
 								this.dispatchMessageEvent(`Prebid.js makes request GAM for VAST url`);
-								if (this.options.hasOwnProperty('numberOfPods')) {
-									if (this.options.numberOfPods > 0) {
-										let creatives = [];
-										dfpOpts.code = this.options.biddersSpec.code;
-										dfpOpts.callback = (err, tag) => {
-											if (err) {
-												creatives.push(null);
-											}
-											else {
-												// add custom parameters
-												if (dfpOpts.params && dfpOpts.params.cust_params) {
-													Object.keys(dfpOpts.params.cust_params).forEach(key => {
-														const value = dfpOpts.params.cust_params[key];
-														const kvp = `&${key}=${value}`;
-														tag += encodeURIComponent(kvp);
-													});
-												}
-												creatives.push(tag);
-											}
-											if (creatives.length === this.options.numberOfPods) {
-												callback(creatives);
-											}
-										};
-										for (let i = 0; i < this.options.numberOfPods; i++) {
-											dfpOpts.code = `${this.options.biddersSpec.code}_${i + 1}`;
-											loaclPBJS.adServers.dfp.buildAdpodVideoUrl(dfpOpts);
+								if (this.options.numberOfPods) {
+									dfpOpts.code = this.options.biddersSpec.code;
+									dfpOpts.callback = (err, tag) => {
+										if (err) {
+											callback(null);
 										}
-									}
-									else {
-										Logger.log(_prefix, 'Invalid numberOfPods setting');
-										callback(null);
-									}
+										else {
+											// add custom parameters
+											if (dfpOpts.params && dfpOpts.params.cust_params) {
+												Object.keys(dfpOpts.params.cust_params).forEach(key => {
+													const value = dfpOpts.params.cust_params[key];
+													const kvp = `&${key}=${value}`;
+													tag += encodeURIComponent(kvp);
+												});
+											}
+											callback(tag);
+										}
+									};
+									dfpOpts.code = this.options.biddersSpec.code;
+									Logger.log(_prefix, 'DFP buildAdpodVideoUrl options: ', dfpOpts);
+									loaclPBJS.adServers.dfp.buildAdpodVideoUrl(dfpOpts);
 								}
 								else {
 									Logger.log(_prefix, 'DFP buildVideoUrl options: ', dfpOpts);
@@ -263,10 +240,15 @@ export class PrebidCommunicator {
 			})
 		};
 
-		/* this.prepareDoPrebid = (callback) => {
-			let urls = [];
-			doPodPrebid(urls, callback);
-		}; */
+		this.prepareDoPrebid = (callback) => {
+			if (this.options.numberOfPods) {
+				let urls = [];
+				this.doPodPrebid(urls, callback);
+			}
+			else {
+				this.doPrebid(callback);
+			}
+		};
 	}
 
 	getVastUrl (timeout, callback) {
@@ -279,9 +261,7 @@ export class PrebidCommunicator {
 			if (!_lpbjsIsBusy) {
 				clearInterval(waitPbjs);
 				this.dispatchMessageEvent('Prebid.js is ready for bidding');
-				// this.doPrebid(callback);
-				let urls = [];
-				this.doPodPrebid(urls, callback);
+				this.prepareDoPrebid(callback);
 			}
 		}, 50);
 	}
