@@ -21,7 +21,6 @@ export class PrebidCommunicator {
 		this.invokePrebidJs = (callback) => {
 			let loaclPBJS = pbjs;
 			if (loaclPBJS && this.options.biddersSpec) {
-				// loaclPBJS.adUnits = [];
 				loaclPBJS.bidderSettings = {};
 				loaclPBJS.medianetGlobals = {};
 
@@ -136,7 +135,7 @@ export class PrebidCommunicator {
 				if (this.options.numberOfPods) {
 					var origCode = this.options.biddersSpec.code;
 					this.options.biddersSpec.code += ('_' + Date.now());
-					Logger.log(_prefix, 'Code for POD prebid request: ' + this.options.biddersSpec.code);
+					Logger.log(_prefix, 'Unique ad unit code for POD prebid request: ' + this.options.biddersSpec.code);
 				}
 				this.invokePrebidJs((bids) => {
 					const selectWinnerByCPM = (arrBids) => {
@@ -241,6 +240,7 @@ export class PrebidCommunicator {
 					callback(urls);
 				}
 				else {
+					// request ad url for next pod only when url fpt previous pod received
 					this.doPodPrebid(urls, callback);
 				}
 			})

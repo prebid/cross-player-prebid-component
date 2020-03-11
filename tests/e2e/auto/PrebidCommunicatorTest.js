@@ -53,6 +53,7 @@ describe('PrebidCommunicator unit test', () => {
             aliasBidder: () => {},
             addAdUnits: () => {},
             setConfig: () => {},
+            removeAdUnit: () => {},
             requestBids: (obj) => {
                 obj.bidsBackHandler({
                     'my-video-tag': {
