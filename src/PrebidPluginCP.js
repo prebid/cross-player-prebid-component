@@ -145,7 +145,7 @@ export class PrebidPluginCP {
                     // let communicator = new PrebidCommunicator(this.options);
                     let communicator = new this.Communicator(this.options);
                     this.dispatchMessageEvent('Request Prebid for VAST url');
-                    communicator.getVastUrl(2000000, (url) => {
+                    communicator.getVastUrl(2000, (url) => {
                         this.defaultUrl = !!url ? url : null;
                         communicator = null;
                         document.dispatchEvent(new Event('gotDefaultUrl'));
