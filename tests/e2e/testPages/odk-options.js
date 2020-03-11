@@ -1,6 +1,6 @@
 var odkPrebidOptions = {
-    prebidPath: '//acdn.adnxs.com/prebid/not-for-prod/1/prebid.js',
-    // prebidPath: 'http://video.devnxs.net/projects/git/prebid.js',
+    // prebidPath: '//acdn.adnxs.com/prebid/not-for-prod/1/prebid.js',
+    prebidPath: 'http://video.devnxs.net/projects/git/prebid.js',
     scriptLoadTimeout: 3000,
 	biddersSpec: {
         code: 'my-video-tag',

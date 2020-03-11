@@ -133,6 +133,11 @@ export class PrebidCommunicator {
 			_lpbjsIsBusy = true;
 			// call bidding
 			if (this.options.biddersSpec) {
+				if (this.options.numberOfPods) {
+					var origCode = this.options.biddersSpec.code;
+					this.options.biddersSpec.code += ('_' + Date.now());
+					Logger.log(_prefix, 'Code for POD prebid request: ' + this.options.biddersSpec.code);
+				}
 				this.invokePrebidJs((bids) => {
 					const selectWinnerByCPM = (arrBids) => {
 						let cpm = 0.0;
@@ -181,6 +186,8 @@ export class PrebidCommunicator {
 								if (this.options.numberOfPods) {
 									dfpOpts.code = this.options.biddersSpec.code;
 									dfpOpts.callback = (err, tag) => {
+										// restore original bidders code
+										this.options.biddersSpec.code = origCode;
 										if (err) {
 											callback(null);
 										}
@@ -196,13 +203,13 @@ export class PrebidCommunicator {
 											callback(tag);
 										}
 									};
-									dfpOpts.code = this.options.biddersSpec.code;
 									Logger.log(_prefix, 'DFP buildAdpodVideoUrl options: ', dfpOpts);
 									loaclPBJS.adServers.dfp.buildAdpodVideoUrl(dfpOpts);
 								}
 								else {
 									Logger.log(_prefix, 'DFP buildVideoUrl options: ', dfpOpts);
 									creative = loaclPBJS.adServers.dfp.buildVideoUrl(dfpOpts);
+									callback(creative);
 								}
 							}
 						}
@@ -229,13 +236,12 @@ export class PrebidCommunicator {
 		this.doPodPrebid = (urls, callback) => {
 			this.doPrebid((creative) => {
 				urls.push(creative);
+				Logger.log(_prefix, 'Got VAST url for POD #' + urls.length + ': ', {url: creative});
 				if (urls.length === this.options.numberOfPods) {
 					callback(urls);
 				}
 				else {
-					setTimeout(() => {
-						this.doPodPrebid(urls, callback);
-					}, 1000);
+					this.doPodPrebid(urls, callback);
 				}
 			})
 		};
