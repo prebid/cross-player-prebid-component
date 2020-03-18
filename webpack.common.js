@@ -1,7 +1,7 @@
 var webpack = require('webpack');
-var path = require('path');
+// var path = require('path');
 
-var eslintStylishConfig = require('eslint-stylish-config');
+// var eslintStylishConfig = require('eslint-stylish-config');
 var StringReplacePlugin = require('string-replace-webpack-plugin');
 
 var buildProps = require('./webpack.properties.js');

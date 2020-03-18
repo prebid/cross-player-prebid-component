@@ -30,8 +30,11 @@ module.exports = function (config) {
 
     babelPreprocessor: {
       options: {
-        presets: ['es2015'],
+        presets: ['@babel/preset-env'],
         sourceMap: 'inline'
+      },
+      filename: function (file) {
+        return file.originalPath.replace(/\.js$/, '.es5.js');
       },
       sourceFileName: function (file) {
         return file.originalPath;
