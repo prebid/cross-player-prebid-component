@@ -22,27 +22,15 @@ module.exports = function (mode) {
             rules: [
                 {
                     test: /\.js$/,
-                    enforce: 'pre',
-                    include: [
-                        path.resolve(__dirname, 'src'),
-                        path.resolve(__dirname, 'test'),
-                    ],
-                    loader: 'eslint-loader',
-                    options: {
-                        formatter: eslintStylishConfig,
-                        emitError: true,
-                        failOnError: true,
-                    }
-                },
-                /* {
-                    test: /\.js$/,
+                    exclude: /node_modules/,
                     use: {
-                      loader: 'babel-loader',
-                      options: {
-                        presets: ['es2015']
-                      }
+                        loader: 'babel-loader',
+                        options:
+                        {
+                            presets: ['@babel/preset-env']
+                        }
                     }
-                } */
+                }
             ]
         },
         plugins: [

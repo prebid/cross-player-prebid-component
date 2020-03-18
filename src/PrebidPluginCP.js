@@ -24,7 +24,7 @@ const RESPONSE_STATUS = {
 export class PrebidPluginCP {
     constructor() {
         this._prefix = 'PrebidPlugin->';
-        Logger.always(this._prefix, 'Version 0.2.1');
+        Logger.always(this._prefix, 'Version 0.2.2');
         this.Communicator = PrebidCommunicator;
         // this.defaultUrl = 'http://video.devnxs.net/raj/outstream/video_AutoPlaySoundOn.xml';
         this.defaultUrl = undefined;
@@ -137,6 +137,17 @@ export class PrebidPluginCP {
             }
         };
 
+        this.dispatchInternalEvent = (name) => {
+            var event;
+            if (typeof (Event) === 'function') {
+                event = new Event(name);
+            } else {
+                event = document.createEvent('Event');
+                event.initEvent(name, true, true);
+            }
+            document.dispatchEvent(event);
+        };
+
         this.continueDoPrebid = () => {
             this.loadPrebidJS(this.options, (succ) => {
                 if (succ) {
@@ -148,13 +159,13 @@ export class PrebidPluginCP {
                     communicator.getVastUrl(2000, (url) => {
                         this.defaultUrl = !!url ? url : null;
                         communicator = null;
-                        document.dispatchEvent(new Event('gotDefaultUrl'));
+                        this.dispatchInternalEvent('gotDefaultUrl');
                     });
                 }
                 else {
                     Logger.error(this._prefix, 'Failed to load prebid.js');
                     this.defaultUrl = null;
-                    document.dispatchEvent(new Event('gotDefaultUrl'));
+                    this.dispatchInternalEvent('gotDefaultUrl');
                 }
             });
         }
@@ -173,7 +184,7 @@ export class PrebidPluginCP {
                         if (errorCode) {
                             Logger.error(this._prefix, `Failed to get default prebid options. Error status: ${errorCode}`);
                             this.defaultUrl = null;
-                            document.dispatchEvent(new Event('gotDefaultUrl'));
+                            this.dispatchInternalEvent('gotDefaultUrl');
                         }
                         else {
                             this.options = JSON.parse(data);
@@ -221,6 +232,36 @@ if (navigator.userAgent.indexOf('Trident/7.0') > -1) {
 
         window.CustomEvent = CustomEvent;
    })();
+}
+
+if (typeof Object.assign !== 'function') {
+    // Must be writable: true, enumerable: false, configurable: true
+    Object.defineProperty(Object, 'assign', {
+      value: function assign(target, varArgs) { // .length of function is 2
+        'use strict';
+        if (target === null || target === undefined) {
+          throw new TypeError('Cannot convert undefined or null to object');
+        }
+
+        var to = Object(target);
+
+        for (var index = 1; index < arguments.length; index++) {
+          var nextSource = arguments[index];
+
+          if (nextSource !== null && nextSource !== undefined) {
+            for (var nextKey in nextSource) {
+              // Avoid bugs when hasOwnProperty is shadowed
+              if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
+                to[nextKey] = nextSource[nextKey];
+              }
+            }
+          }
+        }
+        return to;
+      },
+      writable: true,
+      configurable: true
+    });
 }
 
 window.prebidPluginCP = new PrebidPluginCP();
